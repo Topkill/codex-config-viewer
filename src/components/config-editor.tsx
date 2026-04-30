@@ -24,15 +24,18 @@ import {
   SAMPLE_REFERENCE_URL,
   createSampleDraft,
   SAMPLE_REVIEWED_ON,
+  SUBAGENTS_REFERENCE_URL,
   VERCEL_DEPLOY_URL,
 } from "@/lib/config/defaults";
 import {
   APPROVAL_POLICY_OPTIONS,
+  APPROVALS_REVIEWER_OPTIONS,
   CREDENTIAL_STORE_OPTIONS,
   FILE_OPENER_OPTIONS,
   HISTORY_PERSISTENCE_OPTIONS,
   LOGIN_METHOD_OPTIONS,
   PLAN_REASONING_OPTIONS,
+  PERSONALITY_OPTIONS,
   REASONING_OPTIONS,
   SANDBOX_MODE_OPTIONS,
   SECTION_ORDER,
@@ -40,6 +43,7 @@ import {
   SHELL_INHERITANCE_OPTIONS,
   TRANSPORT_OPTIONS,
   TRUST_LEVEL_OPTIONS,
+  VERBOSITY_OPTIONS,
   WEB_SEARCH_OPTIONS,
 } from "@/lib/config/metadata";
 import type {
@@ -111,6 +115,10 @@ function mergeDraftWithDefaults(base: ConfigDraft, incoming: Partial<ConfigDraft
     tools: {
       ...base.tools,
       ...incoming.tools,
+    },
+    agents: {
+      ...base.agents,
+      ...incoming.agents,
     },
     modelProviders: incoming.modelProviders ?? base.modelProviders,
     mcpServers: incoming.mcpServers ?? base.mcpServers,
@@ -364,6 +372,19 @@ export function ConfigEditor({
     }));
   }
 
+  function updateAgents<Key extends keyof ConfigDraft["agents"]>(
+    key: Key,
+    value: ConfigDraft["agents"][Key],
+  ) {
+    setDraft((current) => ({
+      ...current,
+      agents: {
+        ...current.agents,
+        [key]: value,
+      },
+    }));
+  }
+
   function handleImportFile(file: File) {
     void (async () => {
       setIsImporting(true);
@@ -490,7 +511,16 @@ export function ConfigEditor({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {dictionary.app.reference.source}
+                  {dictionary.app.reference.sampleSource}
+                </a>
+                <span>·</span>
+                <a
+                  className="text-emerald-300 underline decoration-emerald-400/40 underline-offset-4 transition hover:text-emerald-200"
+                  href={SUBAGENTS_REFERENCE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {dictionary.app.reference.subagentsSource}
                 </a>
                 <span>
                   {dictionary.app.reference.declaredAt}: {SAMPLE_REVIEWED_ON}
@@ -686,6 +716,63 @@ export function ConfigEditor({
                     }
                   />
                 </Field>
+                <Field {...fieldText("modelVerbosity")}>
+                  <select
+                    className={inputClassName}
+                    value={draft.general.modelVerbosity}
+                    onChange={(event) =>
+                      updateGeneral(
+                        "modelVerbosity",
+                        event.target.value as ConfigDraft["general"]["modelVerbosity"],
+                      )
+                    }
+                  >
+                    {sharedOptionBlank}
+                    {VERBOSITY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {dictionary.options.verbosity[option]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field {...fieldText("personality")}>
+                  <select
+                    className={inputClassName}
+                    value={draft.general.personality}
+                    onChange={(event) =>
+                      updateGeneral(
+                        "personality",
+                        event.target.value as ConfigDraft["general"]["personality"],
+                      )
+                    }
+                  >
+                    {sharedOptionBlank}
+                    {PERSONALITY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {dictionary.options.personality[option]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field {...fieldText("approvalsReviewer")}>
+                  <select
+                    className={inputClassName}
+                    value={draft.general.approvalsReviewer}
+                    onChange={(event) =>
+                      updateGeneral(
+                        "approvalsReviewer",
+                        event.target.value as ConfigDraft["general"]["approvalsReviewer"],
+                      )
+                    }
+                  >
+                    {sharedOptionBlank}
+                    {APPROVALS_REVIEWER_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {dictionary.options.approvalsReviewer[option]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
                 <Field {...fieldText("ossProvider")}>
                   <input
                     className={inputClassName}
@@ -822,6 +909,57 @@ export function ConfigEditor({
                     onChange={(event) => updateGeneral("projectDocMaxBytes", event.target.value)}
                   />
                 </Field>
+                <Field {...fieldText("modelContextWindow")}>
+                  <input
+                    className={inputClassName}
+                    inputMode="numeric"
+                    value={draft.general.modelContextWindow}
+                    onChange={(event) => updateGeneral("modelContextWindow", event.target.value)}
+                  />
+                </Field>
+                <Field {...fieldText("modelAutoCompactTokenLimit")}>
+                  <input
+                    className={inputClassName}
+                    inputMode="numeric"
+                    value={draft.general.modelAutoCompactTokenLimit}
+                    onChange={(event) =>
+                      updateGeneral("modelAutoCompactTokenLimit", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field {...fieldText("toolOutputTokenLimit")}>
+                  <input
+                    className={inputClassName}
+                    inputMode="numeric"
+                    value={draft.general.toolOutputTokenLimit}
+                    onChange={(event) =>
+                      updateGeneral("toolOutputTokenLimit", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field {...fieldText("modelCatalogJson")}>
+                  <input
+                    className={inputClassName}
+                    value={draft.general.modelCatalogJson}
+                    onChange={(event) => updateGeneral("modelCatalogJson", event.target.value)}
+                  />
+                </Field>
+                <Field {...fieldText("modelInstructionsFile")}>
+                  <input
+                    className={inputClassName}
+                    value={draft.general.modelInstructionsFile}
+                    onChange={(event) =>
+                      updateGeneral("modelInstructionsFile", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field {...fieldText("defaultPermissions")}>
+                  <input
+                    className={inputClassName}
+                    value={draft.general.defaultPermissions}
+                    onChange={(event) => updateGeneral("defaultPermissions", event.target.value)}
+                  />
+                </Field>
               </div>
 
               <StringListEditor
@@ -855,6 +993,10 @@ export function ConfigEditor({
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {([
                   ["allowLoginShell", draft.general.allowLoginShell],
+                  [
+                    "modelSupportsReasoningSummaries",
+                    draft.general.modelSupportsReasoningSummaries,
+                  ],
                   ["hideAgentReasoning", draft.general.hideAgentReasoning],
                   ["showRawAgentReasoning", draft.general.showRawAgentReasoning],
                   ["disablePasteBurst", draft.general.disablePasteBurst],
@@ -1186,6 +1328,41 @@ export function ConfigEditor({
             </SectionCard>
 
             <SectionCard
+              id="agents"
+              title={dictionary.sections.agents.title}
+              description={dictionary.sections.agents.description}
+            >
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <Field {...fieldText("agentsMaxThreads")}>
+                  <input
+                    className={inputClassName}
+                    inputMode="numeric"
+                    value={draft.agents.maxThreads}
+                    onChange={(event) => updateAgents("maxThreads", event.target.value)}
+                  />
+                </Field>
+                <Field {...fieldText("agentsMaxDepth")}>
+                  <input
+                    className={inputClassName}
+                    inputMode="numeric"
+                    value={draft.agents.maxDepth}
+                    onChange={(event) => updateAgents("maxDepth", event.target.value)}
+                  />
+                </Field>
+                <Field {...fieldText("agentsJobMaxRuntimeSeconds")}>
+                  <input
+                    className={inputClassName}
+                    inputMode="numeric"
+                    value={draft.agents.jobMaxRuntimeSeconds}
+                    onChange={(event) =>
+                      updateAgents("jobMaxRuntimeSeconds", event.target.value)
+                    }
+                  />
+                </Field>
+              </div>
+            </SectionCard>
+
+            <SectionCard
               id="modelProviders"
               title={dictionary.sections.modelProviders.title}
               description={dictionary.sections.modelProviders.description}
@@ -1335,6 +1512,88 @@ export function ConfigEditor({
                           }
                         />
                       </Field>
+                      <Field {...fieldText("authCommand")}>
+                        <input
+                          className={inputClassName}
+                          value={provider.authCommand}
+                          onChange={(event) =>
+                            setDraft((current) => {
+                              const modelProviders = [...current.modelProviders];
+                              modelProviders[index] = {
+                                ...provider,
+                                authCommand: event.target.value,
+                              };
+                              return { ...current, modelProviders };
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field {...fieldText("authTimeoutMs")}>
+                        <input
+                          className={inputClassName}
+                          inputMode="numeric"
+                          value={provider.authTimeoutMs}
+                          onChange={(event) =>
+                            setDraft((current) => {
+                              const modelProviders = [...current.modelProviders];
+                              modelProviders[index] = {
+                                ...provider,
+                                authTimeoutMs: event.target.value,
+                              };
+                              return { ...current, modelProviders };
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field {...fieldText("authRefreshIntervalMs")}>
+                        <input
+                          className={inputClassName}
+                          inputMode="numeric"
+                          value={provider.authRefreshIntervalMs}
+                          onChange={(event) =>
+                            setDraft((current) => {
+                              const modelProviders = [...current.modelProviders];
+                              modelProviders[index] = {
+                                ...provider,
+                                authRefreshIntervalMs: event.target.value,
+                              };
+                              return { ...current, modelProviders };
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field {...fieldText("awsProfile")}>
+                        <input
+                          className={inputClassName}
+                          value={provider.awsProfile}
+                          onChange={(event) =>
+                            setDraft((current) => {
+                              const modelProviders = [...current.modelProviders];
+                              modelProviders[index] = {
+                                ...provider,
+                                awsProfile: event.target.value,
+                              };
+                              return { ...current, modelProviders };
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field {...fieldText("awsRegion")}>
+                        <input
+                          className={inputClassName}
+                          value={provider.awsRegion}
+                          onChange={(event) =>
+                            setDraft((current) => {
+                              const modelProviders = [...current.modelProviders];
+                              modelProviders[index] = {
+                                ...provider,
+                                awsRegion: event.target.value,
+                              };
+                              return { ...current, modelProviders };
+                            })
+                          }
+                        />
+                      </Field>
                       <Field {...fieldText("requestMaxRetries")}>
                         <input
                           className={inputClassName}
@@ -1463,6 +1722,24 @@ export function ConfigEditor({
                         keyLabel={dictionary.app.common.key}
                         valueLabel={dictionary.app.common.value}
                       />
+                      <StringListEditor
+                        {...fieldText("authArgs")}
+                        values={provider.authArgs}
+                        onChange={(values) =>
+                          setDraft((current) => {
+                            const modelProviders = [...current.modelProviders];
+                            modelProviders[index] = {
+                              ...provider,
+                              authArgs: values,
+                            };
+                            return { ...current, modelProviders };
+                          })
+                        }
+                        addLabel={dictionary.app.actions.addItem}
+                        removeLabel={dictionary.app.actions.remove}
+                        emptyLabel={dictionary.app.emptyStates.list}
+                        placeholder="--audience"
+                      />
                       <label
                         className={`flex items-start gap-3 rounded-2xl border px-4 py-3 ${boolInputClass(provider.supportsWebsockets)}`}
                       >
@@ -1490,6 +1767,33 @@ export function ConfigEditor({
                           </div>
                           <p className="mt-1 text-xs leading-5 text-slate-400">
                             {fieldText("supportsWebsockets").hint}
+                          </p>
+                        </div>
+                      </label>
+                      <label
+                        className={`flex items-start gap-3 rounded-2xl border px-4 py-3 ${boolInputClass(provider.requiresOpenaiAuth)}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-emerald-400"
+                          checked={provider.requiresOpenaiAuth}
+                          onChange={(event) =>
+                            setDraft((current) => {
+                              const modelProviders = [...current.modelProviders];
+                              modelProviders[index] = {
+                                ...provider,
+                                requiresOpenaiAuth: event.target.checked,
+                              };
+                              return { ...current, modelProviders };
+                            })
+                          }
+                        />
+                        <div>
+                          <div className="text-sm font-medium text-slate-200">
+                            {fieldText("requiresOpenaiAuth").label}
+                          </div>
+                          <p className="mt-1 text-xs leading-5 text-slate-400">
+                            {fieldText("requiresOpenaiAuth").hint}
                           </p>
                         </div>
                       </label>
@@ -1670,6 +1974,24 @@ export function ConfigEditor({
                           }
                         />
                       </Field>
+                      {server.transport === "stdio" ? (
+                        <Field {...fieldText("experimentalEnvironment")}>
+                          <input
+                            className={inputClassName}
+                            value={server.experimentalEnvironment}
+                            onChange={(event) =>
+                              setDraft((current) => {
+                                const mcpServers = [...current.mcpServers];
+                                mcpServers[index] = {
+                                  ...server,
+                                  experimentalEnvironment: event.target.value,
+                                };
+                                return { ...current, mcpServers };
+                              })
+                            }
+                          />
+                        </Field>
+                      ) : null}
                     </div>
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       {([
@@ -1743,6 +2065,24 @@ export function ConfigEditor({
                           emptyLabel={dictionary.app.emptyStates.pairs}
                           keyLabel={dictionary.app.common.key}
                           valueLabel={dictionary.app.common.value}
+                        />
+                        <StringListEditor
+                          {...fieldText("envVars")}
+                          values={server.envVars}
+                          onChange={(values) =>
+                            setDraft((current) => {
+                              const mcpServers = [...current.mcpServers];
+                              mcpServers[index] = {
+                                ...server,
+                                envVars: values,
+                              };
+                              return { ...current, mcpServers };
+                            })
+                          }
+                          addLabel={dictionary.app.actions.addItem}
+                          removeLabel={dictionary.app.actions.remove}
+                          emptyLabel={dictionary.app.emptyStates.list}
+                          placeholder="GITHUB_TOKEN"
                         />
                       </>
                     ) : (
@@ -2440,7 +2780,16 @@ export function ConfigEditor({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {dictionary.app.reference.source}
+                    {dictionary.app.reference.sampleSource}
+                  </a>
+                  <span className="mx-2 text-slate-600">·</span>
+                  <a
+                    className="text-emerald-300 underline decoration-emerald-400/40 underline-offset-4 transition hover:text-emerald-200"
+                    href={SUBAGENTS_REFERENCE_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {dictionary.app.reference.subagentsSource}
                   </a>
                 </div>
                 <div>

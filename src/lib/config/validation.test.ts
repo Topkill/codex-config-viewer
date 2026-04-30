@@ -1,4 +1,8 @@
-import { createEmptyMcpServer, createSampleDraft } from "@/lib/config/defaults";
+import {
+  createEmptyMcpServer,
+  createEmptyModelProvider,
+  createSampleDraft,
+} from "@/lib/config/defaults";
 import { validateConfigDraft } from "@/lib/config/validation";
 
 describe("config validation", () => {
@@ -8,43 +12,29 @@ describe("config validation", () => {
     draft.general.projectDocMaxBytes = "-1";
     draft.general.mcpOauthCallbackPort = "0";
     draft.history.maxBytes = "-1";
+    draft.agents.maxThreads = "0";
+    draft.agents.maxDepth = "-1";
+    draft.agents.jobMaxRuntimeSeconds = "1.5";
     draft.shellEnvironmentPolicy.set = [
       { key: "FOO", value: "bar" },
       { key: "FOO", value: "baz" },
     ];
     draft.modelProviders = [
       {
-        ...draft.modelProviders[0],
+        ...createEmptyModelProvider(),
         id: "openai-compatible",
         name: "Provider A",
         baseUrl: "https://example.com/v1",
         wireApi: "responses",
-        queryParams: [],
         envKey: "API_KEY",
-        envKeyInstructions: "",
-        requestMaxRetries: "",
-        streamMaxRetries: "",
-        streamIdleTimeoutMs: "",
-        supportsWebsockets: false,
-        experimentalBearerToken: "",
-        httpHeaders: [],
-        envHttpHeaders: [],
       },
       {
+        ...createEmptyModelProvider(),
         id: "openai-compatible",
         name: "Provider B",
         baseUrl: "https://example.com/v2",
         wireApi: "responses",
-        queryParams: [],
         envKey: "API_KEY",
-        envKeyInstructions: "",
-        requestMaxRetries: "",
-        streamMaxRetries: "",
-        streamIdleTimeoutMs: "",
-        supportsWebsockets: false,
-        experimentalBearerToken: "",
-        httpHeaders: [],
-        envHttpHeaders: [],
       },
     ];
 
@@ -101,6 +91,30 @@ describe("config validation", () => {
         (issue) =>
           issue.severity === "error" &&
           issue.path === "general.mcpOauthCallbackPort" &&
+          issue.message.includes("greater than 0"),
+      ),
+    ).toBe(true);
+    expect(
+      issues.some(
+        (issue) =>
+          issue.severity === "error" &&
+          issue.path === "agents.maxThreads" &&
+          issue.message.includes("greater than 0"),
+      ),
+    ).toBe(true);
+    expect(
+      issues.some(
+        (issue) =>
+          issue.severity === "error" &&
+          issue.path === "agents.maxDepth" &&
+          issue.message.includes("0 or greater"),
+      ),
+    ).toBe(true);
+    expect(
+      issues.some(
+        (issue) =>
+          issue.severity === "error" &&
+          issue.path === "agents.jobMaxRuntimeSeconds" &&
           issue.message.includes("greater than 0"),
       ),
     ).toBe(true);

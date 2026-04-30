@@ -74,13 +74,21 @@ function hasProviderContent(row: ConfigDraft["modelProviders"][number]) {
     compactKeyValueList(row.queryParams).length > 0 ||
     row.envKey !== empty.envKey ||
     row.envKeyInstructions !== empty.envKeyInstructions ||
+    row.requiresOpenaiAuth !== empty.requiresOpenaiAuth ||
     row.requestMaxRetries !== empty.requestMaxRetries ||
     row.streamMaxRetries !== empty.streamMaxRetries ||
     row.streamIdleTimeoutMs !== empty.streamIdleTimeoutMs ||
     row.supportsWebsockets !== empty.supportsWebsockets ||
     row.experimentalBearerToken !== empty.experimentalBearerToken ||
     compactKeyValueList(row.httpHeaders).length > 0 ||
-    compactKeyValueList(row.envHttpHeaders).length > 0
+    compactKeyValueList(row.envHttpHeaders).length > 0 ||
+    row.authCommand !== empty.authCommand ||
+    compactStringList(row.authArgs).length > 0 ||
+    row.authCwd !== empty.authCwd ||
+    row.authTimeoutMs !== empty.authTimeoutMs ||
+    row.authRefreshIntervalMs !== empty.authRefreshIntervalMs ||
+    row.awsProfile !== empty.awsProfile ||
+    row.awsRegion !== empty.awsRegion
   );
 }
 
@@ -94,7 +102,9 @@ function hasMcpContent(row: ConfigDraft["mcpServers"][number]) {
     row.command !== empty.command ||
     compactStringList(row.args).length > 0 ||
     compactKeyValueList(row.env).length > 0 ||
+    compactStringList(row.envVars).length > 0 ||
     row.cwd !== empty.cwd ||
+    row.experimentalEnvironment !== empty.experimentalEnvironment ||
     row.url !== empty.url ||
     row.bearerTokenEnvVar !== empty.bearerTokenEnvVar ||
     compactKeyValueList(row.httpHeaders).length > 0 ||
@@ -120,7 +130,13 @@ function hasProfileContent(row: ConfigDraft["profiles"][number]) {
     row.ossProvider !== empty.ossProvider ||
     row.modelReasoningEffort !== empty.modelReasoningEffort ||
     row.planModeReasoningEffort !== empty.planModeReasoningEffort ||
-    row.modelReasoningSummary !== empty.modelReasoningSummary
+    row.modelReasoningSummary !== empty.modelReasoningSummary ||
+    row.modelVerbosity !== empty.modelVerbosity ||
+    row.personality !== empty.personality ||
+    row.modelCatalogJson !== empty.modelCatalogJson ||
+    row.modelInstructionsFile !== empty.modelInstructionsFile ||
+    row.experimentalCompactPromptFile !== empty.experimentalCompactPromptFile ||
+    row.toolsViewImage !== empty.toolsViewImage
   );
 }
 
@@ -304,6 +320,31 @@ export function validateConfigDraft(
         ),
       );
     }
+
+    const authTimeoutMs = parseIntegerLike(provider.authTimeoutMs);
+    if (authTimeoutMs !== null && (!Number.isFinite(authTimeoutMs) || authTimeoutMs <= 0)) {
+      issues.push(
+        createIssue(
+          "error",
+          `${basePath}.authTimeoutMs`,
+          positiveNumber(fieldLabel("authTimeoutMs")),
+        ),
+      );
+    }
+
+    const authRefreshIntervalMs = parseIntegerLike(provider.authRefreshIntervalMs);
+    if (
+      authRefreshIntervalMs !== null &&
+      (!Number.isFinite(authRefreshIntervalMs) || authRefreshIntervalMs < 0)
+    ) {
+      issues.push(
+        createIssue(
+          "error",
+          `${basePath}.authRefreshIntervalMs`,
+          nonNegativeNumber(fieldLabel("authRefreshIntervalMs")),
+        ),
+      );
+    }
   });
 
   draft.mcpServers.forEach((server, index) => {
@@ -471,6 +512,48 @@ export function validateConfigDraft(
         "error",
         "general.mcpOauthCallbackPort",
         positiveNumber(fieldLabel("mcpOauthCallbackPort")),
+      ),
+    );
+  }
+
+  const agentsMaxThreads = parseIntegerLike(draft.agents.maxThreads);
+  if (
+    agentsMaxThreads !== null &&
+    (!Number.isFinite(agentsMaxThreads) || agentsMaxThreads <= 0)
+  ) {
+    issues.push(
+      createIssue(
+        "error",
+        "agents.maxThreads",
+        positiveNumber(fieldLabel("agentsMaxThreads")),
+      ),
+    );
+  }
+
+  const agentsMaxDepth = parseIntegerLike(draft.agents.maxDepth);
+  if (
+    agentsMaxDepth !== null &&
+    (!Number.isFinite(agentsMaxDepth) || agentsMaxDepth < 0)
+  ) {
+    issues.push(
+      createIssue(
+        "error",
+        "agents.maxDepth",
+        nonNegativeNumber(fieldLabel("agentsMaxDepth")),
+      ),
+    );
+  }
+
+  const agentsJobMaxRuntimeSeconds = parseIntegerLike(draft.agents.jobMaxRuntimeSeconds);
+  if (
+    agentsJobMaxRuntimeSeconds !== null &&
+    (!Number.isFinite(agentsJobMaxRuntimeSeconds) || agentsJobMaxRuntimeSeconds <= 0)
+  ) {
+    issues.push(
+      createIssue(
+        "error",
+        "agents.jobMaxRuntimeSeconds",
+        positiveNumber(fieldLabel("agentsJobMaxRuntimeSeconds")),
       ),
     );
   }

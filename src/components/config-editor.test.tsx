@@ -165,7 +165,7 @@ describe("ConfigEditor", () => {
 
     await waitFor(() => {
       expect(window.localStorage.getItem("codex-config-viewer-state:v1")).toContain(
-        '"approvalPolicy":"on-failure"',
+        '"approvalPolicy":"on-request"',
       );
       expect(window.localStorage.getItem("codex-config-viewer-state:v1")).toContain(
         '"networkAccess":true',
@@ -202,10 +202,28 @@ describe("ConfigEditor", () => {
     });
   });
 
+  it("renders reference link text in both header and preview footer", () => {
+    render(
+      <ConfigEditor
+        locale="en"
+        dictionary={getDictionary("en")}
+        initialDraft={createSampleDraft()}
+        initialPreview={createPreview("en")}
+        initialUnsupportedToml=""
+      />,
+    );
+
+    expect(
+      screen.getAllByRole("link", { name: "Official sample config" }),
+    ).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Subagents" })).toHaveLength(2);
+  });
+
   it("shows validation issues for an invalid draft", async () => {
     const invalidDraft = createSampleDraft();
     invalidDraft.general.activeProfile = "missing-profile";
     invalidDraft.history.maxBytes = "-1";
+    invalidDraft.agents.maxThreads = "0";
 
     render(
       <ConfigEditor
@@ -220,7 +238,36 @@ describe("ConfigEditor", () => {
     await waitFor(() => {
       expect(screen.getByText("Validation")).toBeInTheDocument();
       expect(screen.getByText(/missing profile/i)).toBeInTheDocument();
-      expect(screen.getByText(/greater than 0/i)).toBeInTheDocument();
+      expect(screen.getByText(/max history bytes must be greater than 0/i)).toBeInTheDocument();
+      expect(screen.getByText(/max threads must be greater than 0/i)).toBeInTheDocument();
+    });
+  });
+
+  it("renders and edits the agents section", async () => {
+    render(
+      <ConfigEditor
+        locale="en"
+        dictionary={getDictionary("en")}
+        initialDraft={createSampleDraft()}
+        initialPreview={createPreview("en")}
+        initialUnsupportedToml=""
+      />,
+    );
+
+    const section = screen.getByRole("heading", { name: "Agents" }).closest("section");
+    expect(section).not.toBeNull();
+    if (!section) {
+      return;
+    }
+
+    const maxThreadsInput = within(section).getByRole("textbox", { name: /max threads/i });
+    await userEvent.type(maxThreadsInput, "6");
+
+    await waitFor(() => {
+      expect(maxThreadsInput).toHaveValue("6");
+      expect(window.localStorage.getItem("codex-config-viewer-state:v1")).toContain(
+        '"maxThreads":"6"',
+      );
     });
   });
 });

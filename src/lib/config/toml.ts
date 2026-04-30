@@ -8,6 +8,7 @@ import {
   createSampleDraft,
   SAMPLE_REFERENCE_URL,
   SAMPLE_REVIEWED_ON,
+  SUBAGENTS_REFERENCE_URL,
   SAMPLE_UNSUPPORTED_TOML,
 } from "@/lib/config/defaults";
 import { addConfigComments } from "@/lib/config/comments";
@@ -90,6 +91,16 @@ function maybeAssignStringRecord(target: TomlObject, key: string, value: KeyValu
   }
 }
 
+function serializeGranularApproval(draft: ConfigDraft["general"]["approvalPolicyGranular"]) {
+  return {
+    sandbox_approval: draft.sandboxApproval,
+    rules: draft.rules,
+    mcp_elicitations: draft.mcpElicitations,
+    request_permissions: draft.requestPermissions,
+    skill_approval: draft.skillApproval,
+  };
+}
+
 function serializeProvider(provider: ModelProviderDraft): TomlObject {
   const next: TomlObject = {};
 
@@ -99,6 +110,7 @@ function serializeProvider(provider: ModelProviderDraft): TomlObject {
   maybeAssignStringRecord(next, "query_params", provider.queryParams);
   maybeAssignString(next, "env_key", provider.envKey);
   maybeAssignString(next, "env_key_instructions", provider.envKeyInstructions);
+  maybeAssignBoolean(next, "requires_openai_auth", provider.requiresOpenaiAuth);
   maybeAssignNumber(next, "request_max_retries", provider.requestMaxRetries);
   maybeAssignNumber(next, "stream_max_retries", provider.streamMaxRetries);
   maybeAssignNumber(next, "stream_idle_timeout_ms", provider.streamIdleTimeoutMs);
@@ -106,6 +118,23 @@ function serializeProvider(provider: ModelProviderDraft): TomlObject {
   maybeAssignString(next, "experimental_bearer_token", provider.experimentalBearerToken);
   maybeAssignStringRecord(next, "http_headers", provider.httpHeaders);
   maybeAssignStringRecord(next, "env_http_headers", provider.envHttpHeaders);
+
+  const auth: TomlObject = {};
+  maybeAssignString(auth, "command", provider.authCommand);
+  maybeAssignStringList(auth, "args", provider.authArgs);
+  maybeAssignString(auth, "cwd", provider.authCwd);
+  maybeAssignNumber(auth, "timeout_ms", provider.authTimeoutMs);
+  maybeAssignNumber(auth, "refresh_interval_ms", provider.authRefreshIntervalMs);
+  if (Object.keys(auth).length > 0) {
+    next.auth = auth;
+  }
+
+  const aws: TomlObject = {};
+  maybeAssignString(aws, "profile", provider.awsProfile);
+  maybeAssignString(aws, "region", provider.awsRegion);
+  if (Object.keys(aws).length > 0) {
+    next.aws = aws;
+  }
 
   return next;
 }
@@ -125,7 +154,9 @@ function serializeMcpServer(server: McpServerDraft): TomlObject {
     maybeAssignString(next, "command", server.command);
     maybeAssignStringList(next, "args", server.args);
     maybeAssignStringRecord(next, "env", server.env);
+    maybeAssignStringList(next, "env_vars", server.envVars);
     maybeAssignString(next, "cwd", server.cwd);
+    maybeAssignString(next, "experimental_environment", server.experimentalEnvironment);
   } else {
     maybeAssignString(next, "url", server.url);
     maybeAssignString(next, "bearer_token_env_var", server.bearerTokenEnvVar);
@@ -155,6 +186,16 @@ function serializeProfile(profile: ProfileDraft): TomlObject {
   maybeAssignString(next, "model_reasoning_effort", profile.modelReasoningEffort);
   maybeAssignString(next, "plan_mode_reasoning_effort", profile.planModeReasoningEffort);
   maybeAssignString(next, "model_reasoning_summary", profile.modelReasoningSummary);
+  maybeAssignString(next, "model_verbosity", profile.modelVerbosity);
+  maybeAssignString(next, "personality", profile.personality);
+  maybeAssignString(next, "model_catalog_json", profile.modelCatalogJson);
+  maybeAssignString(next, "model_instructions_file", profile.modelInstructionsFile);
+  maybeAssignString(
+    next,
+    "experimental_compact_prompt_file",
+    profile.experimentalCompactPromptFile,
+  );
+  maybeAssignBoolean(next, "tools_view_image", profile.toolsViewImage);
 
   return next;
 }
@@ -169,7 +210,14 @@ export function buildSupportedTomlObject(
   maybeAssignString(raw, "model", draft.general.model);
   maybeAssignString(raw, "review_model", draft.general.reviewModel);
   maybeAssignString(raw, "model_provider", draft.general.modelProvider);
-  maybeAssignString(raw, "approval_policy", draft.general.approvalPolicy);
+  if (draft.general.approvalPolicy === "granular") {
+    raw.approval_policy = {
+      granular: serializeGranularApproval(draft.general.approvalPolicyGranular),
+    };
+  } else {
+    maybeAssignString(raw, "approval_policy", draft.general.approvalPolicy);
+  }
+  maybeAssignString(raw, "approvals_reviewer", draft.general.approvalsReviewer);
   maybeAssignBoolean(raw, "allow_login_shell", draft.general.allowLoginShell);
   maybeAssignString(raw, "sandbox_mode", draft.general.sandboxMode);
   maybeAssignString(raw, "service_tier", draft.general.serviceTier);
@@ -182,6 +230,23 @@ export function buildSupportedTomlObject(
     draft.general.planModeReasoningEffort,
   );
   maybeAssignString(raw, "model_reasoning_summary", draft.general.modelReasoningSummary);
+  maybeAssignString(raw, "model_verbosity", draft.general.modelVerbosity);
+  maybeAssignNumber(raw, "model_context_window", draft.general.modelContextWindow);
+  maybeAssignNumber(
+    raw,
+    "model_auto_compact_token_limit",
+    draft.general.modelAutoCompactTokenLimit,
+  );
+  maybeAssignBoolean(
+    raw,
+    "model_supports_reasoning_summaries",
+    draft.general.modelSupportsReasoningSummaries,
+  );
+  maybeAssignString(raw, "model_catalog_json", draft.general.modelCatalogJson);
+  maybeAssignString(raw, "model_instructions_file", draft.general.modelInstructionsFile);
+  maybeAssignNumber(raw, "tool_output_token_limit", draft.general.toolOutputTokenLimit);
+  maybeAssignString(raw, "default_permissions", draft.general.defaultPermissions);
+  maybeAssignString(raw, "personality", draft.general.personality);
   maybeAssignString(raw, "oss_provider", draft.general.ossProvider);
   maybeAssignString(
     raw,
@@ -211,6 +276,19 @@ export function buildSupportedTomlObject(
   );
   maybeAssignStringList(raw, "project_root_markers", draft.general.projectRootMarkers);
   maybeAssignStringList(raw, "notify", draft.general.notify);
+  maybeAssignString(raw, "commit_attribution", draft.general.commitAttribution);
+  maybeAssignString(
+    raw,
+    "experimental_compact_prompt_file",
+    draft.general.experimentalCompactPromptFile,
+  );
+  maybeAssignNumber(
+    raw,
+    "background_terminal_max_timeout",
+    draft.general.backgroundTerminalMaxTimeout,
+  );
+  maybeAssignString(raw, "log_dir", draft.general.logDir);
+  maybeAssignString(raw, "sqlite_home", draft.general.sqliteHome);
   maybeAssignString(raw, "file_opener", draft.general.fileOpener);
   maybeAssignBoolean(raw, "hide_agent_reasoning", draft.general.hideAgentReasoning);
   maybeAssignBoolean(raw, "show_raw_agent_reasoning", draft.general.showRawAgentReasoning);
@@ -303,6 +381,18 @@ export function buildSupportedTomlObject(
     raw.tools = tools;
   }
 
+  const agents: TomlObject = {};
+  maybeAssignNumber(agents, "max_threads", draft.agents.maxThreads);
+  maybeAssignNumber(agents, "max_depth", draft.agents.maxDepth);
+  maybeAssignNumber(
+    agents,
+    "job_max_runtime_seconds",
+    draft.agents.jobMaxRuntimeSeconds,
+  );
+  if (Object.keys(agents).length > 0) {
+    raw.agents = agents;
+  }
+
   const modelProviders: TomlObject = {};
   for (const provider of draft.modelProviders) {
     const id = provider.id.trim();
@@ -373,6 +463,8 @@ export function buildSupportedTomlObject(
 function parseModelProvider(id: string, value: unknown): ModelProviderDraft {
   const next = createEmptyModelProvider();
   const record = isPlainObject(value) ? value : {};
+  const auth = isPlainObject(record.auth) ? record.auth : {};
+  const aws = isPlainObject(record.aws) ? record.aws : {};
 
   return {
     ...next,
@@ -383,6 +475,7 @@ function parseModelProvider(id: string, value: unknown): ModelProviderDraft {
     queryParams: recordToKeyValueItems(record.query_params),
     envKey: parseString(record.env_key),
     envKeyInstructions: parseString(record.env_key_instructions),
+    requiresOpenaiAuth: parseBoolean(record.requires_openai_auth),
     requestMaxRetries: parseNumberLikeString(record.request_max_retries),
     streamMaxRetries: parseNumberLikeString(record.stream_max_retries),
     streamIdleTimeoutMs: parseNumberLikeString(record.stream_idle_timeout_ms),
@@ -390,6 +483,13 @@ function parseModelProvider(id: string, value: unknown): ModelProviderDraft {
     experimentalBearerToken: parseString(record.experimental_bearer_token),
     httpHeaders: recordToKeyValueItems(record.http_headers),
     envHttpHeaders: recordToKeyValueItems(record.env_http_headers),
+    authCommand: parseString(auth.command),
+    authArgs: parseStringArray(auth.args),
+    authCwd: parseString(auth.cwd),
+    authTimeoutMs: parseNumberLikeString(auth.timeout_ms),
+    authRefreshIntervalMs: parseNumberLikeString(auth.refresh_interval_ms),
+    awsProfile: parseString(aws.profile),
+    awsRegion: parseString(aws.region),
   };
 }
 
@@ -412,7 +512,9 @@ function parseMcpServer(id: string, value: unknown): McpServerDraft {
     command: parseString(record.command),
     args: parseStringArray(record.args),
     env: recordToKeyValueItems(record.env),
+    envVars: parseStringArray(record.env_vars),
     cwd: parseString(record.cwd),
+    experimentalEnvironment: parseString(record.experimental_environment),
     url: parseString(record.url),
     bearerTokenEnvVar: parseString(record.bearer_token_env_var),
     httpHeaders: recordToKeyValueItems(record.http_headers),
@@ -446,6 +548,12 @@ function parseProfile(id: string, value: unknown): ProfileDraft {
       record.plan_mode_reasoning_effort,
     ) as ProfileDraft["planModeReasoningEffort"],
     modelReasoningSummary: parseString(record.model_reasoning_summary),
+    modelVerbosity: parseString(record.model_verbosity) as ProfileDraft["modelVerbosity"],
+    personality: parseString(record.personality) as ProfileDraft["personality"],
+    modelCatalogJson: parseString(record.model_catalog_json),
+    modelInstructionsFile: parseString(record.model_instructions_file),
+    experimentalCompactPromptFile: parseString(record.experimental_compact_prompt_file),
+    toolsViewImage: parseBoolean(record.tools_view_image),
   };
 }
 
@@ -464,9 +572,23 @@ export function parseSupportedTomlObject(value: TomlObject): ConfigDraft {
   draft.general.model = parseString(value.model);
   draft.general.reviewModel = parseString(value.review_model);
   draft.general.modelProvider = parseString(value.model_provider);
-  draft.general.approvalPolicy = parseString(
-    value.approval_policy,
-  ) as ConfigDraft["general"]["approvalPolicy"];
+  if (isPlainObject(value.approval_policy) && isPlainObject(value.approval_policy.granular)) {
+    draft.general.approvalPolicy = "granular";
+    draft.general.approvalPolicyGranular = {
+      sandboxApproval: parseBoolean(value.approval_policy.granular.sandbox_approval),
+      rules: parseBoolean(value.approval_policy.granular.rules),
+      mcpElicitations: parseBoolean(value.approval_policy.granular.mcp_elicitations),
+      requestPermissions: parseBoolean(value.approval_policy.granular.request_permissions),
+      skillApproval: parseBoolean(value.approval_policy.granular.skill_approval),
+    };
+  } else {
+    draft.general.approvalPolicy = parseString(
+      value.approval_policy,
+    ) as ConfigDraft["general"]["approvalPolicy"];
+  }
+  draft.general.approvalsReviewer = parseString(
+    value.approvals_reviewer,
+  ) as ConfigDraft["general"]["approvalsReviewer"];
   draft.general.allowLoginShell = parseBoolean(value.allow_login_shell);
   draft.general.sandboxMode = parseString(
     value.sandbox_mode,
@@ -483,6 +605,23 @@ export function parseSupportedTomlObject(value: TomlObject): ConfigDraft {
     value.plan_mode_reasoning_effort,
   ) as ConfigDraft["general"]["planModeReasoningEffort"];
   draft.general.modelReasoningSummary = parseString(value.model_reasoning_summary);
+  draft.general.modelVerbosity = parseString(
+    value.model_verbosity,
+  ) as ConfigDraft["general"]["modelVerbosity"];
+  draft.general.modelContextWindow = parseNumberLikeString(value.model_context_window);
+  draft.general.modelAutoCompactTokenLimit = parseNumberLikeString(
+    value.model_auto_compact_token_limit,
+  );
+  draft.general.modelSupportsReasoningSummaries = parseBoolean(
+    value.model_supports_reasoning_summaries,
+  );
+  draft.general.modelCatalogJson = parseString(value.model_catalog_json);
+  draft.general.modelInstructionsFile = parseString(value.model_instructions_file);
+  draft.general.toolOutputTokenLimit = parseNumberLikeString(value.tool_output_token_limit);
+  draft.general.defaultPermissions = parseString(value.default_permissions);
+  draft.general.personality = parseString(
+    value.personality,
+  ) as ConfigDraft["general"]["personality"];
   draft.general.ossProvider = parseString(value.oss_provider);
   draft.general.cliAuthCredentialsStore = parseString(
     value.cli_auth_credentials_store,
@@ -504,6 +643,15 @@ export function parseSupportedTomlObject(value: TomlObject): ConfigDraft {
   );
   draft.general.projectRootMarkers = parseStringArray(value.project_root_markers);
   draft.general.notify = parseStringArray(value.notify);
+  draft.general.commitAttribution = parseString(value.commit_attribution);
+  draft.general.experimentalCompactPromptFile = parseString(
+    value.experimental_compact_prompt_file,
+  );
+  draft.general.backgroundTerminalMaxTimeout = parseNumberLikeString(
+    value.background_terminal_max_timeout,
+  );
+  draft.general.logDir = parseString(value.log_dir);
+  draft.general.sqliteHome = parseString(value.sqlite_home);
   draft.general.fileOpener = parseString(
     value.file_opener,
   ) as ConfigDraft["general"]["fileOpener"];
@@ -569,6 +717,14 @@ export function parseSupportedTomlObject(value: TomlObject): ConfigDraft {
 
   if (isPlainObject(value.tools)) {
     draft.tools.viewImage = parseBoolean(value.tools.view_image);
+  }
+
+  if (isPlainObject(value.agents)) {
+    draft.agents.maxThreads = parseNumberLikeString(value.agents.max_threads);
+    draft.agents.maxDepth = parseNumberLikeString(value.agents.max_depth);
+    draft.agents.jobMaxRuntimeSeconds = parseNumberLikeString(
+      value.agents.job_max_runtime_seconds,
+    );
   }
 
   if (isPlainObject(value.model_providers)) {
@@ -637,9 +793,19 @@ export function extractUnsupportedFragment(value: TomlObject): TomlObject {
     "service_tier",
     "web_search",
     "profile",
+    "approvals_reviewer",
     "model_reasoning_effort",
     "plan_mode_reasoning_effort",
     "model_reasoning_summary",
+    "model_verbosity",
+    "model_context_window",
+    "model_auto_compact_token_limit",
+    "model_supports_reasoning_summaries",
+    "model_catalog_json",
+    "model_instructions_file",
+    "tool_output_token_limit",
+    "default_permissions",
+    "personality",
     "oss_provider",
     "cli_auth_credentials_store",
     "allow_login_shell",
@@ -654,6 +820,11 @@ export function extractUnsupportedFragment(value: TomlObject): TomlObject {
     "project_doc_fallback_filenames",
     "project_root_markers",
     "notify",
+    "commit_attribution",
+    "experimental_compact_prompt_file",
+    "background_terminal_max_timeout",
+    "log_dir",
+    "sqlite_home",
     "file_opener",
     "hide_agent_reasoning",
     "show_raw_agent_reasoning",
@@ -664,6 +835,24 @@ export function extractUnsupportedFragment(value: TomlObject): TomlObject {
   ]);
   if (typeof clone.approval_policy === "string") {
     delete clone.approval_policy;
+  }
+  if (
+    isPlainObject(clone.approval_policy) &&
+    isPlainObject(clone.approval_policy.granular)
+  ) {
+    stripKnownKeys(clone.approval_policy.granular, [
+      "sandbox_approval",
+      "rules",
+      "mcp_elicitations",
+      "request_permissions",
+      "skill_approval",
+    ]);
+    if (Object.keys(clone.approval_policy.granular).length === 0) {
+      delete clone.approval_policy.granular;
+    }
+    if (Object.keys(clone.approval_policy).length === 0) {
+      delete clone.approval_policy;
+    }
   }
 
   if (isPlainObject(clone.history)) {
@@ -716,6 +905,17 @@ export function extractUnsupportedFragment(value: TomlObject): TomlObject {
     }
   }
 
+  if (isPlainObject(clone.agents)) {
+    stripKnownKeys(clone.agents, [
+      "max_threads",
+      "max_depth",
+      "job_max_runtime_seconds",
+    ]);
+    if (Object.keys(clone.agents).length === 0) {
+      delete clone.agents;
+    }
+  }
+
   stripKnownNestedEntries(clone.model_providers, [
     "name",
     "base_url",
@@ -723,6 +923,7 @@ export function extractUnsupportedFragment(value: TomlObject): TomlObject {
     "query_params",
     "env_key",
     "env_key_instructions",
+    "requires_openai_auth",
     "request_max_retries",
     "stream_max_retries",
     "stream_idle_timeout_ms",
@@ -730,6 +931,8 @@ export function extractUnsupportedFragment(value: TomlObject): TomlObject {
     "experimental_bearer_token",
     "http_headers",
     "env_http_headers",
+    "auth",
+    "aws",
   ]);
   if (isPlainObject(clone.model_providers) && Object.keys(clone.model_providers).length === 0) {
     delete clone.model_providers;
@@ -741,7 +944,9 @@ export function extractUnsupportedFragment(value: TomlObject): TomlObject {
     "command",
     "args",
     "env",
+    "env_vars",
     "cwd",
+    "experimental_environment",
     "url",
     "bearer_token_env_var",
     "http_headers",
@@ -768,6 +973,12 @@ export function extractUnsupportedFragment(value: TomlObject): TomlObject {
     "model_reasoning_effort",
     "plan_mode_reasoning_effort",
     "model_reasoning_summary",
+    "model_verbosity",
+    "personality",
+    "model_catalog_json",
+    "model_instructions_file",
+    "experimental_compact_prompt_file",
+    "tools_view_image",
   ]);
   if (isPlainObject(clone.profiles) && Object.keys(clone.profiles).length === 0) {
     delete clone.profiles;
@@ -877,7 +1088,8 @@ export function createSampleToml(options: GenerateConfigOptions = {}): string {
 function addReferenceHeader(toml: string): string {
   const header = [
     `# Reference: ${SAMPLE_REFERENCE_URL}`,
-    `# Declared against official sample on ${SAMPLE_REVIEWED_ON}`,
+    `# Reference: ${SUBAGENTS_REFERENCE_URL}`,
+    `# Declared against official docs on ${SAMPLE_REVIEWED_ON}`,
     "",
   ].join("\n");
 

@@ -10,12 +10,19 @@ export type ReasoningEffortValue =
 
 export type PlanReasoningEffortValue = "" | "none" | Exclude<ReasoningEffortValue, "">;
 
+export type VerbosityValue = "" | "low" | "medium" | "high";
+
+export type PersonalityValue = "" | "none" | "friendly" | "pragmatic";
+
+export type ApprovalsReviewerValue = "" | "user" | "auto_review";
+
 export type ApprovalPolicyValue =
   | ""
   | "untrusted"
   | "on-failure"
   | "on-request"
-  | "never";
+  | "never"
+  | "granular";
 
 export type SandboxModeValue =
   | ""
@@ -52,11 +59,21 @@ export interface KeyValueItem {
   value: string;
 }
 
+export interface GranularApprovalSettings {
+  sandboxApproval: boolean;
+  rules: boolean;
+  mcpElicitations: boolean;
+  requestPermissions: boolean;
+  skillApproval: boolean;
+}
+
 export interface GeneralSettings {
   model: string;
   reviewModel: string;
   modelProvider: string;
   approvalPolicy: ApprovalPolicyValue;
+  approvalPolicyGranular: GranularApprovalSettings;
+  approvalsReviewer: ApprovalsReviewerValue;
   allowLoginShell: boolean;
   sandboxMode: SandboxModeValue;
   serviceTier: ServiceTierValue;
@@ -65,6 +82,15 @@ export interface GeneralSettings {
   modelReasoningEffort: ReasoningEffortValue;
   planModeReasoningEffort: PlanReasoningEffortValue;
   modelReasoningSummary: string;
+  modelVerbosity: VerbosityValue;
+  modelContextWindow: string;
+  modelAutoCompactTokenLimit: string;
+  modelSupportsReasoningSummaries: boolean;
+  modelCatalogJson: string;
+  modelInstructionsFile: string;
+  toolOutputTokenLimit: string;
+  defaultPermissions: string;
+  personality: PersonalityValue;
   ossProvider: string;
   cliAuthCredentialsStore: CredentialStoreValue;
   chatgptBaseUrl: string;
@@ -78,6 +104,11 @@ export interface GeneralSettings {
   projectDocFallbackFilenames: string[];
   projectRootMarkers: string[];
   notify: string[];
+  commitAttribution: string;
+  experimentalCompactPromptFile: string;
+  backgroundTerminalMaxTimeout: string;
+  logDir: string;
+  sqliteHome: string;
   fileOpener: FileOpenerValue;
   hideAgentReasoning: boolean;
   showRawAgentReasoning: boolean;
@@ -118,6 +149,12 @@ export interface ToolsSettings {
   viewImage: boolean;
 }
 
+export interface AgentsSettings {
+  maxThreads: string;
+  maxDepth: string;
+  jobMaxRuntimeSeconds: string;
+}
+
 export interface ModelProviderDraft {
   id: string;
   name: string;
@@ -126,6 +163,7 @@ export interface ModelProviderDraft {
   queryParams: KeyValueItem[];
   envKey: string;
   envKeyInstructions: string;
+  requiresOpenaiAuth: boolean;
   requestMaxRetries: string;
   streamMaxRetries: string;
   streamIdleTimeoutMs: string;
@@ -133,6 +171,13 @@ export interface ModelProviderDraft {
   experimentalBearerToken: string;
   httpHeaders: KeyValueItem[];
   envHttpHeaders: KeyValueItem[];
+  authCommand: string;
+  authArgs: string[];
+  authCwd: string;
+  authTimeoutMs: string;
+  authRefreshIntervalMs: string;
+  awsProfile: string;
+  awsRegion: string;
 }
 
 export interface McpServerDraft {
@@ -143,7 +188,9 @@ export interface McpServerDraft {
   command: string;
   args: string[];
   env: KeyValueItem[];
+  envVars: string[];
   cwd: string;
+  experimentalEnvironment: string;
   url: string;
   bearerTokenEnvVar: string;
   httpHeaders: KeyValueItem[];
@@ -167,6 +214,12 @@ export interface ProfileDraft {
   modelReasoningEffort: ReasoningEffortValue;
   planModeReasoningEffort: PlanReasoningEffortValue;
   modelReasoningSummary: string;
+  modelVerbosity: VerbosityValue;
+  personality: PersonalityValue;
+  modelCatalogJson: string;
+  modelInstructionsFile: string;
+  experimentalCompactPromptFile: string;
+  toolsViewImage: boolean;
 }
 
 export interface ProjectDraft {
@@ -181,6 +234,7 @@ export interface ConfigDraft {
   sandboxWorkspaceWrite: SandboxWorkspaceWriteSettings;
   shellEnvironmentPolicy: ShellEnvironmentSettings;
   tools: ToolsSettings;
+  agents: AgentsSettings;
   modelProviders: ModelProviderDraft[];
   mcpServers: McpServerDraft[];
   profiles: ProfileDraft[];

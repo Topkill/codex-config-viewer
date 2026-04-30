@@ -6,8 +6,9 @@ import type {
   ProjectDraft,
 } from "@/lib/config/types";
 
-export const SAMPLE_REVIEWED_ON = "2026-03-19";
+export const SAMPLE_REVIEWED_ON = "2026-04-29";
 export const SAMPLE_REFERENCE_URL = "https://developers.openai.com/codex/config-sample/";
+export const SUBAGENTS_REFERENCE_URL = "https://developers.openai.com/codex/subagents";
 export const REPOSITORY_URL = "https://github.com/depressi0n/codex-config-viewer";
 export const SAMPLE_UNSUPPORTED_TOML = [
   "[tui]",
@@ -47,6 +48,7 @@ export function createEmptyModelProvider(): ModelProviderDraft {
     queryParams: [],
     envKey: "",
     envKeyInstructions: "",
+    requiresOpenaiAuth: false,
     requestMaxRetries: "",
     streamMaxRetries: "",
     streamIdleTimeoutMs: "",
@@ -54,6 +56,13 @@ export function createEmptyModelProvider(): ModelProviderDraft {
     experimentalBearerToken: "",
     httpHeaders: [],
     envHttpHeaders: [],
+    authCommand: "",
+    authArgs: [],
+    authCwd: "",
+    authTimeoutMs: "",
+    authRefreshIntervalMs: "",
+    awsProfile: "",
+    awsRegion: "",
   };
 }
 
@@ -66,7 +75,9 @@ export function createEmptyMcpServer(): McpServerDraft {
     command: "",
     args: [],
     env: [],
+    envVars: [],
     cwd: "",
+    experimentalEnvironment: "",
     url: "",
     bearerTokenEnvVar: "",
     httpHeaders: [],
@@ -92,6 +103,12 @@ export function createEmptyProfile(): ProfileDraft {
     modelReasoningEffort: "",
     planModeReasoningEffort: "",
     modelReasoningSummary: "",
+    modelVerbosity: "",
+    personality: "",
+    modelCatalogJson: "",
+    modelInstructionsFile: "",
+    experimentalCompactPromptFile: "",
+    toolsViewImage: false,
   };
 }
 
@@ -109,6 +126,14 @@ export function createEmptyDraft(): ConfigDraft {
       reviewModel: "",
       modelProvider: "",
       approvalPolicy: "",
+      approvalPolicyGranular: {
+        sandboxApproval: false,
+        rules: false,
+        mcpElicitations: false,
+        requestPermissions: false,
+        skillApproval: false,
+      },
+      approvalsReviewer: "",
       allowLoginShell: false,
       sandboxMode: "",
       serviceTier: "",
@@ -117,6 +142,15 @@ export function createEmptyDraft(): ConfigDraft {
       modelReasoningEffort: "",
       planModeReasoningEffort: "",
       modelReasoningSummary: "",
+      modelVerbosity: "",
+      modelContextWindow: "",
+      modelAutoCompactTokenLimit: "",
+      modelSupportsReasoningSummaries: false,
+      modelCatalogJson: "",
+      modelInstructionsFile: "",
+      toolOutputTokenLimit: "",
+      defaultPermissions: "",
+      personality: "",
       ossProvider: "",
       cliAuthCredentialsStore: "",
       chatgptBaseUrl: "",
@@ -130,6 +164,11 @@ export function createEmptyDraft(): ConfigDraft {
       projectDocFallbackFilenames: [],
       projectRootMarkers: [],
       notify: [],
+      commitAttribution: "",
+      experimentalCompactPromptFile: "",
+      backgroundTerminalMaxTimeout: "",
+      logDir: "",
+      sqliteHome: "",
       fileOpener: "",
       hideAgentReasoning: false,
       showRawAgentReasoning: false,
@@ -164,6 +203,11 @@ export function createEmptyDraft(): ConfigDraft {
       webSearch: "",
       viewImage: false,
     },
+    agents: {
+      maxThreads: "",
+      maxDepth: "",
+      jobMaxRuntimeSeconds: "",
+    },
     modelProviders: [],
     mcpServers: [],
     profiles: [],
@@ -174,10 +218,18 @@ export function createEmptyDraft(): ConfigDraft {
 export function createSampleDraft(): ConfigDraft {
   return {
     general: {
-      model: "gpt-5.4",
+      model: "gpt-5.5",
       reviewModel: "",
       modelProvider: "openai",
       approvalPolicy: "on-request",
+      approvalPolicyGranular: {
+        sandboxApproval: true,
+        rules: true,
+        mcpElicitations: true,
+        requestPermissions: false,
+        skillApproval: false,
+      },
+      approvalsReviewer: "",
       allowLoginShell: true,
       sandboxMode: "read-only",
       serviceTier: "",
@@ -186,6 +238,15 @@ export function createSampleDraft(): ConfigDraft {
       modelReasoningEffort: "",
       planModeReasoningEffort: "",
       modelReasoningSummary: "",
+      modelVerbosity: "",
+      modelContextWindow: "",
+      modelAutoCompactTokenLimit: "",
+      modelSupportsReasoningSummaries: false,
+      modelCatalogJson: "",
+      modelInstructionsFile: "",
+      toolOutputTokenLimit: "",
+      defaultPermissions: "",
+      personality: "",
       ossProvider: "",
       cliAuthCredentialsStore: "file",
       chatgptBaseUrl: "https://chatgpt.com/backend-api/",
@@ -199,6 +260,11 @@ export function createSampleDraft(): ConfigDraft {
       projectDocFallbackFilenames: [],
       projectRootMarkers: [],
       notify: [],
+      commitAttribution: "",
+      experimentalCompactPromptFile: "",
+      backgroundTerminalMaxTimeout: "",
+      logDir: "",
+      sqliteHome: "",
       fileOpener: "vscode",
       hideAgentReasoning: false,
       showRawAgentReasoning: false,
@@ -233,6 +299,11 @@ export function createSampleDraft(): ConfigDraft {
       webSearch: "cached",
       viewImage: false,
     },
+    agents: {
+      maxThreads: "",
+      maxDepth: "",
+      jobMaxRuntimeSeconds: "",
+    },
     modelProviders: [],
     mcpServers: [],
     profiles: [],
@@ -243,7 +314,7 @@ export function createSampleDraft(): ConfigDraft {
 export function createRecommendedDraft(): ConfigDraft {
   const draft = createSampleDraft();
 
-  draft.general.approvalPolicy = "on-failure";
+  draft.general.approvalPolicy = "on-request";
   draft.general.sandboxMode = "workspace-write";
   draft.general.webSearch = "live";
   draft.history.persistence = "save-all";

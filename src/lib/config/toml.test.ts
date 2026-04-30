@@ -17,6 +17,14 @@ describe("config TOML transforms", () => {
     draft.general.sandboxMode = "workspace-write";
     draft.general.allowLoginShell = true;
     draft.general.projectDocMaxBytes = "65536";
+    draft.general.modelVerbosity = "high";
+    draft.general.modelContextWindow = "400000";
+    draft.general.modelAutoCompactTokenLimit = "200000";
+    draft.general.toolOutputTokenLimit = "16000";
+    draft.general.modelCatalogJson = "./models.json";
+    draft.general.modelSupportsReasoningSummaries = true;
+    draft.general.personality = "pragmatic";
+    draft.general.approvalsReviewer = "auto_review";
     draft.general.projectDocFallbackFilenames = ["AGENTS.md", "README.md"];
     draft.general.projectRootMarkers = [".git", "package.json"];
     draft.general.notify = ["terminal-notifier", "-title", "Codex"];
@@ -27,6 +35,9 @@ describe("config TOML transforms", () => {
     draft.shellEnvironmentPolicy.set = [{ key: "FOO", value: "bar" }];
     draft.shellEnvironmentPolicy.experimentalUseProfile = true;
     draft.tools.viewImage = true;
+    draft.agents.maxThreads = "6";
+    draft.agents.maxDepth = "1";
+    draft.agents.jobMaxRuntimeSeconds = "1800";
     draft.projects = [{ path: "/workspace/project", trustLevel: "trusted" }];
 
     const docsServer = createEmptyMcpServer();
@@ -43,10 +54,21 @@ describe("config TOML transforms", () => {
       "# Reference: https://developers.openai.com/codex/config-sample/",
     );
     expect(generated.toml).toContain(
-      "# Declared against official sample on 2026-03-19",
+      "# Reference: https://developers.openai.com/codex/subagents",
     );
-    expect(parsed.draft.general.model).toBe("gpt-5.4");
+    expect(generated.toml).toContain(
+      "# Declared against official docs on 2026-04-29",
+    );
+    expect(parsed.draft.general.model).toBe("gpt-5.5");
     expect(parsed.draft.general.sandboxMode).toBe("workspace-write");
+    expect(parsed.draft.general.modelVerbosity).toBe("high");
+    expect(parsed.draft.general.modelContextWindow).toBe("400000");
+    expect(parsed.draft.general.modelAutoCompactTokenLimit).toBe("200000");
+    expect(parsed.draft.general.toolOutputTokenLimit).toBe("16000");
+    expect(parsed.draft.general.modelCatalogJson).toBe("./models.json");
+    expect(parsed.draft.general.modelSupportsReasoningSummaries).toBe(true);
+    expect(parsed.draft.general.personality).toBe("pragmatic");
+    expect(parsed.draft.general.approvalsReviewer).toBe("auto_review");
     expect(parsed.draft.general.projectDocMaxBytes).toBe("65536");
     expect(parsed.draft.general.projectDocFallbackFilenames).toEqual([
       "AGENTS.md",
@@ -60,6 +82,9 @@ describe("config TOML transforms", () => {
     expect(parsed.draft.shellEnvironmentPolicy.set).toEqual([{ key: "FOO", value: "bar" }]);
     expect(parsed.draft.shellEnvironmentPolicy.experimentalUseProfile).toBe(true);
     expect(parsed.draft.tools.viewImage).toBe(true);
+    expect(parsed.draft.agents.maxThreads).toBe("6");
+    expect(parsed.draft.agents.maxDepth).toBe("1");
+    expect(parsed.draft.agents.jobMaxRuntimeSeconds).toBe("1800");
     expect(parsed.draft.mcpServers[0]?.url).toBe("https://docs.example.com/mcp");
     expect(parsed.draft.projects[0]?.trustLevel).toBe("trusted");
   });
@@ -94,20 +119,62 @@ describe("config TOML transforms", () => {
     expect(parsed.unsupportedToml).toContain('allow = [ "api.openai.com" ]');
   });
 
-  it("preserves unsupported granular approval policies instead of dropping them", () => {
+  it("round-trips granular approval policies", () => {
     const parsed = parseConfigToml(
       [
-        "[approval_policy]",
-        'mode = "granular"',
-        "",
-        "[approval_policy.granular]",
-        "read = true",
+        "approval_policy = { granular = { sandbox_approval = true, rules = true, mcp_elicitations = true, request_permissions = false, skill_approval = false } }",
       ].join("\n"),
     );
+    const generated = generateConfigToml(parsed.draft);
+    const reparsed = parseConfigToml(generated.toml);
 
-    expect(parsed.draft.general.approvalPolicy).toBe("");
-    expect(parsed.unsupportedToml).toContain("[approval_policy]");
-    expect(parsed.unsupportedToml).toContain("read = true");
+    expect(parsed.draft.general.approvalPolicy).toBe("granular");
+    expect(parsed.draft.general.approvalPolicyGranular.sandboxApproval).toBe(true);
+    expect(parsed.unsupportedToml).toBe("");
+    expect(reparsed.draft.general.approvalPolicy).toBe("granular");
+    expect(reparsed.draft.general.approvalPolicyGranular.requestPermissions).toBe(false);
+  });
+
+  it("round-trips current provider and MCP additions", () => {
+    const parsed = parseConfigToml(
+      [
+        "[model_providers.proxy]",
+        'name = "Proxy"',
+        'base_url = "https://proxy.example.com/v1"',
+        'wire_api = "responses"',
+        "requires_openai_auth = true",
+        "[model_providers.proxy.auth]",
+        'command = "/usr/local/bin/fetch-codex-token"',
+        'args = ["--audience", "codex"]',
+        "timeout_ms = 5000",
+        "refresh_interval_ms = 300000",
+        "[model_providers.proxy.aws]",
+        'profile = "dev"',
+        'region = "us-east-1"',
+        "",
+        "[mcp_servers.docs]",
+        'command = "docs-server"',
+        'env_vars = ["LOCAL_TOKEN", "REMOTE_TOKEN"]',
+        'experimental_environment = "remote"',
+        "startup_timeout_ms = 10000",
+      ].join("\n"),
+    );
+    const generated = generateConfigToml(parsed.draft);
+    const reparsed = parseConfigToml(generated.toml);
+
+    expect(parsed.unsupportedToml).toBe("");
+    expect(reparsed.draft.modelProviders[0]?.requiresOpenaiAuth).toBe(true);
+    expect(reparsed.draft.modelProviders[0]?.authCommand).toBe(
+      "/usr/local/bin/fetch-codex-token",
+    );
+    expect(reparsed.draft.modelProviders[0]?.authArgs).toEqual(["--audience", "codex"]);
+    expect(reparsed.draft.modelProviders[0]?.authTimeoutMs).toBe("5000");
+    expect(reparsed.draft.modelProviders[0]?.authRefreshIntervalMs).toBe("300000");
+    expect(reparsed.draft.modelProviders[0]?.awsProfile).toBe("dev");
+    expect(reparsed.draft.modelProviders[0]?.awsRegion).toBe("us-east-1");
+    expect(reparsed.draft.mcpServers[0]?.envVars).toEqual(["LOCAL_TOKEN", "REMOTE_TOKEN"]);
+    expect(reparsed.draft.mcpServers[0]?.experimentalEnvironment).toBe("remote");
+    expect(reparsed.draft.mcpServers[0]?.startupTimeoutSec).toBe("10");
   });
 
   it("returns parse error details for invalid TOML", () => {
@@ -126,7 +193,7 @@ describe("config TOML transforms", () => {
     const generated = generateConfigToml(draft);
     const parsed = parseConfigToml(generated.toml);
 
-    expect(parsed.draft.general.approvalPolicy).toBe("on-failure");
+    expect(parsed.draft.general.approvalPolicy).toBe("on-request");
     expect(parsed.draft.general.sandboxMode).toBe("workspace-write");
     expect(parsed.draft.general.webSearch).toBe("live");
     expect(parsed.draft.tools.webSearch).toBe("live");
@@ -148,6 +215,28 @@ describe("config TOML transforms", () => {
     expect(withComments.toml).toContain("# Model: Default session model.");
     expect(withComments.toml).toContain("# History: Compaction and persistence controls.");
     expect(withoutComments.toml).not.toContain("# Model: Default session model.");
+  });
+
+  it("supports parsing and annotating the [agents] section", () => {
+    const parsed = parseConfigToml(
+      [
+        "[agents]",
+        "max_threads = 8",
+        "max_depth = 2",
+        "job_max_runtime_seconds = 900",
+      ].join("\n"),
+    );
+    const generated = generateConfigToml(parsed.draft, "", {
+      includeComments: true,
+      locale: "en",
+    });
+
+    expect(parsed.draft.agents.maxThreads).toBe("8");
+    expect(parsed.draft.agents.maxDepth).toBe("2");
+    expect(parsed.draft.agents.jobMaxRuntimeSeconds).toBe("900");
+    expect(parsed.unsupportedToml).toBe("");
+    expect(generated.toml).toContain("# Agents: Subagent concurrency and runtime limits under [agents].");
+    expect(generated.toml).toContain("# Max threads: Maximum concurrent subagent threads.");
   });
 
   it("includes the current official unsupported sample sections in the sample TOML", () => {

@@ -4,13 +4,13 @@ export const enDictionary: DictionaryShape = {
   app: {
     title: "Codex Config Viewer",
     subtitle:
-      "A bilingual visual editor for the official Codex config sample, with TOML import, preview, and export.",
-    badge: "Reviewed against official sample on 2026-03-19",
+      "A bilingual visual editor for the official Codex config docs, with TOML import, preview, and export.",
+    badge: "Reviewed against official docs on 2026-04-29",
     sampleLabel: "Official sample snapshot",
     recommended: {
       label: "Recommended starter preset",
       description:
-        "An app-maintained preset built on the 2026-03-19 official sample for day-to-day coding: workspace-write sandbox, on-failure approvals, core shell inheritance, and live web search.",
+        "An app-maintained preset built on the 2026-04-29 official sample for day-to-day coding: workspace-write sandbox, on-request approvals, core shell inheritance, and live web search.",
       note: "This preset is opinionated and is not part of the official sample.",
     },
     actions: {
@@ -33,7 +33,8 @@ export const enDictionary: DictionaryShape = {
     },
     reference: {
       label: "Reference",
-      source: "Official sample config",
+      sampleSource: "Official sample config",
+      subagentsSource: "Subagents",
       declaredAt: "Declared date",
     },
     deploy: {
@@ -135,6 +136,10 @@ export const enDictionary: DictionaryShape = {
       title: "Tools",
       description: "Tool-related behavior from the sample schema.",
     },
+    agents: {
+      title: "Agents",
+      description: "Subagent concurrency and runtime limits under [agents].",
+    },
     modelProviders: {
       title: "Model Providers",
       description: "Provider presets under [model_providers].",
@@ -161,6 +166,9 @@ export const enDictionary: DictionaryShape = {
     reviewModel: ["Review model", "Optional override used by /review."],
     modelProvider: ["Model provider", "Provider ID selected from [model_providers]."],
     approvalPolicy: ["Approval policy", "When Codex requests approval for tool actions."],
+    approvalsReviewer: ["Approvals reviewer", "Who reviews eligible approval prompts."],
+    defaultPermissions: ["Default permissions", "Named permissions profile to apply by default."],
+    personality: ["Personality", "Communication style for supported models."],
     allowLoginShell: [
       "Allow login shell",
       "Allow login-shell semantics for commands when needed.",
@@ -178,6 +186,22 @@ export const enDictionary: DictionaryShape = {
       "Reasoning summary mode",
       "Optional summary mode for reasoning output.",
     ],
+    modelVerbosity: ["Model verbosity", "Text verbosity override for GPT-5 family models."],
+    modelContextWindow: ["Context window", "Manual context window tokens for the model."],
+    modelAutoCompactTokenLimit: [
+      "Auto compact token limit",
+      "Token threshold that triggers automatic history compaction.",
+    ],
+    modelSupportsReasoningSummaries: [
+      "Supports reasoning summaries",
+      "Force reasoning summary metadata for the current model.",
+    ],
+    modelCatalogJson: ["Model catalog JSON", "Startup-only model catalog JSON path."],
+    modelInstructionsFile: [
+      "Model instructions file",
+      "Path to a file replacing built-in model instructions.",
+    ],
+    toolOutputTokenLimit: ["Tool output token limit", "Token budget stored per tool output."],
     ossProvider: ["OSS provider", "Default provider for --oss sessions."],
     cliAuthCredentialsStore: [
       "CLI auth credential store",
@@ -218,6 +242,17 @@ export const enDictionary: DictionaryShape = {
       "Extra filenames or directories used to detect project roots.",
     ],
     notify: ["Notify command", "Command array run after Codex finishes."],
+    commitAttribution: ["Commit attribution", "Override or disable commit co-author text."],
+    experimentalCompactPromptFile: [
+      "Compact prompt file",
+      "Path to a compact prompt override file.",
+    ],
+    backgroundTerminalMaxTimeout: [
+      "Terminal max timeout (ms)",
+      "Maximum empty background terminal polling window.",
+    ],
+    logDir: ["Log dir", "Directory where Codex writes logs."],
+    sqliteHome: ["SQLite home", "Directory for SQLite-backed runtime state."],
     fileOpener: ["File opener", "URI scheme used for clickable citations."],
     hideAgentReasoning: ["Hide agent reasoning", "Suppress reasoning events from output."],
     showRawAgentReasoning: [
@@ -273,6 +308,18 @@ export const enDictionary: DictionaryShape = {
       "Let Codex source your shell profile before command execution.",
     ],
     viewImage: ["View image", "Enable image-view tooling when supported."],
+    agentsMaxThreads: [
+      "Max threads",
+      "Maximum concurrent subagent threads. Leave blank to use Codex defaults.",
+    ],
+    agentsMaxDepth: [
+      "Max depth",
+      "Maximum subagent nesting depth. Root sessions start at depth 0.",
+    ],
+    agentsJobMaxRuntimeSeconds: [
+      "Job max runtime (sec)",
+      "Maximum runtime per subagent job in seconds.",
+    ],
     providerId: ["Provider id", "Table key inside [model_providers]."],
     providerName: ["Provider name", "Friendly label shown in UI or docs."],
     baseUrl: ["Base URL", "Base URL for the provider or MCP endpoint."],
@@ -283,6 +330,7 @@ export const enDictionary: DictionaryShape = {
       "Env key instructions",
       "Help text shown when the environment variable is missing.",
     ],
+    requiresOpenaiAuth: ["Requires OpenAI auth", "Use OpenAI auth for this provider."],
     requestMaxRetries: ["Request max retries", "Retry count for non-streaming requests."],
     streamMaxRetries: ["Stream max retries", "Retry count for streaming requests."],
     streamIdleTimeoutMs: ["Stream idle timeout (ms)", "Timeout for idle streams."],
@@ -296,11 +344,26 @@ export const enDictionary: DictionaryShape = {
       "Env HTTP headers",
       "Headers populated from environment variables.",
     ],
+    authCommand: ["Auth command", "Command that prints a bearer token."],
+    authArgs: ["Auth args", "Arguments passed to the auth command."],
+    authCwd: ["Auth cwd", "Working directory for the auth command."],
+    authTimeoutMs: ["Auth timeout (ms)", "Maximum auth command runtime."],
+    authRefreshIntervalMs: [
+      "Auth refresh interval (ms)",
+      "How often to refresh the command-backed token.",
+    ],
+    awsProfile: ["AWS profile", "AWS profile for provider SigV4 auth."],
+    awsRegion: ["AWS region", "AWS region for provider SigV4 auth."],
     mcpId: ["Server id", "Table key inside [mcp_servers]."],
     command: ["Command", "Server executable for STDIO transport."],
     args: ["Args", "Command arguments."],
     env: ["Environment", "Environment variables passed to the server process."],
+    envVars: ["Inherited env vars", "Parent environment variables to forward."],
     cwd: ["Working directory", "Working directory override for the process."],
+    experimentalEnvironment: [
+      "Experimental environment",
+      "Experimental MCP placement, such as remote.",
+    ],
     url: ["URL", "Remote MCP endpoint URL."],
     bearerTokenEnvVar: [
       "Bearer token env var",
@@ -330,6 +393,21 @@ export const enDictionary: DictionaryShape = {
       "on-failure": "On failure",
       "on-request": "On request",
       never: "Never",
+      granular: "Granular",
+    },
+    approvalsReviewer: {
+      user: "User",
+      auto_review: "Auto review",
+    },
+    personality: {
+      none: "None",
+      friendly: "Friendly",
+      pragmatic: "Pragmatic",
+    },
+    verbosity: {
+      low: "Low",
+      medium: "Medium",
+      high: "High",
     },
     sandboxMode: {
       "read-only": "Read only",

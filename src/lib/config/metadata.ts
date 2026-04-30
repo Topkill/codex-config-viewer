@@ -5,6 +5,7 @@ export const SECTION_ORDER = [
   "sandbox",
   "shell",
   "tools",
+  "agents",
   "modelProviders",
   "mcpServers",
   "profiles",
@@ -16,11 +17,18 @@ export const REASONING_OPTIONS = ["minimal", "low", "medium", "high", "xhigh"] a
 
 export const PLAN_REASONING_OPTIONS = ["none", ...REASONING_OPTIONS] as const;
 
+export const VERBOSITY_OPTIONS = ["low", "medium", "high"] as const;
+
+export const PERSONALITY_OPTIONS = ["none", "friendly", "pragmatic"] as const;
+
+export const APPROVALS_REVIEWER_OPTIONS = ["user", "auto_review"] as const;
+
 export const APPROVAL_POLICY_OPTIONS = [
   "untrusted",
   "on-failure",
   "on-request",
   "never",
+  "granular",
 ] as const;
 
 export const SANDBOX_MODE_OPTIONS = [
