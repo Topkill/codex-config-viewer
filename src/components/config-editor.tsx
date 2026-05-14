@@ -2575,7 +2575,7 @@ export function ConfigEditor({
             </SectionCard>
           </main>
 
-          <aside className="h-fit space-y-4 xl:sticky xl:top-4">
+          <aside className="h-fit space-y-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 hover:[&::-webkit-scrollbar-thumb]:bg-white/20">
             <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-4 backdrop-blur">
               <div className="mb-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4">
                 <div className="text-sm font-semibold text-sky-100">
@@ -2767,8 +2767,8 @@ export function ConfigEditor({
                 </div>
               ) : null}
               <div className="rounded-2xl border border-white/10 bg-slate-950/90 p-4">
-                <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap break-words text-sm leading-6 text-slate-100">
-                  {preview || dictionary.app.preview.empty}
+                <pre className="max-h-[70vh] xl:max-h-none overflow-auto whitespace-pre-wrap break-words text-sm leading-6 text-slate-100">
+                    {preview || dictionary.app.preview.empty}
                 </pre>
               </div>
               <div className="mt-3 text-xs text-slate-500">
