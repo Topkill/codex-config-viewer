@@ -6,7 +6,7 @@ import type {
   ProjectDraft,
 } from "@/lib/config/types";
 
-export const SAMPLE_REVIEWED_ON = "2026-04-29";
+export const SAMPLE_REVIEWED_ON = "2026-06-04";
 export const SAMPLE_REFERENCE_URL = "https://developers.openai.com/codex/config-sample/";
 export const SUBAGENTS_REFERENCE_URL = "https://developers.openai.com/codex/subagents";
 export const REPOSITORY_URL = "https://github.com/depressi0n/codex-config-viewer";
@@ -31,6 +31,15 @@ export const SAMPLE_UNSUPPORTED_TOML = [
   "",
   "[windows]",
   'sandbox = "unelevated"',
+  "",
+  "[agents.reviewer]",
+  'description = "Find correctness, security, and test risks in code."',
+  'config_file = "./agents/reviewer.toml"',
+  'nickname_candidates = ["Athena", "Ada"]',
+  "",
+  "[[skills.config]]",
+  'path = "/path/to/skill/SKILL.md"',
+  "enabled = false",
   "",
 ].join("\n");
 export const VERCEL_DEPLOY_URL = `https://vercel.com/new/clone?${new URLSearchParams({

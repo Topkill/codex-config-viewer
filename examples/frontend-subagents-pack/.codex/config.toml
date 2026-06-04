@@ -1,0 +1,34 @@
+# Recommended global subagent settings for frontend-focused workflows.
+# References:
+# - https://developers.openai.com/codex/subagents
+# - https://developers.openai.com/api/docs/models
+
+[agents]
+max_threads = 4
+max_depth = 1
+job_max_runtime_seconds = 1800
+
+[agents.ui_reviewer]
+description = "Frontend reviewer focused on visual regressions, interaction risks, accessibility, and missing UX coverage."
+config_file = "./agents/ui-reviewer.toml"
+nickname_candidates = ["Lens", "Pixel", "Prism"]
+
+[agents.interaction_builder]
+description = "Implementation agent for targeted frontend changes, interaction polish, and component-level fixes."
+config_file = "./agents/interaction-builder.toml"
+nickname_candidates = ["Motion", "Craft", "Spark"]
+
+[agents.a11y_auditor]
+description = "Accessibility specialist for semantics, keyboard support, focus behavior, contrast, and screen reader risks."
+config_file = "./agents/a11y-auditor.toml"
+nickname_candidates = ["Guide", "Keyline", "Beacon"]
+
+[agents.responsive_triager]
+description = "Layout triage agent for mobile, tablet, narrow viewport, and overflow regressions."
+config_file = "./agents/responsive-triager.toml"
+nickname_candidates = ["Grid", "Flow", "Frame"]
+
+[agents.design_system_guardian]
+description = "Consistency reviewer for tokens, spacing, typography, variants, and component API drift."
+config_file = "./agents/design-system-guardian.toml"
+nickname_candidates = ["Token", "Gridline", "Keeper"]

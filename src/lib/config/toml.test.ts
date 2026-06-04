@@ -57,7 +57,7 @@ describe("config TOML transforms", () => {
       "# Reference: https://developers.openai.com/codex/subagents",
     );
     expect(generated.toml).toContain(
-      "# Declared against official docs on 2026-04-29",
+      "# Declared against official docs on 2026-06-04",
     );
     expect(parsed.draft.general.model).toBe("gpt-5.5");
     expect(parsed.draft.general.sandboxMode).toBe("workspace-write");
@@ -248,6 +248,9 @@ describe("config TOML transforms", () => {
     expect(sampleToml).toContain("[tui]");
     expect(sampleToml).toContain("[analytics]");
     expect(sampleToml).toContain("[otel]");
+    expect(sampleToml).toContain("[agents.reviewer]");
+    expect(sampleToml).toContain('config_file = "./agents/reviewer.toml"');
+    expect(sampleToml).toContain("[[skills.config]]");
   });
 
   it("returns validation issues from generated draft output", () => {

@@ -1,6 +1,6 @@
 # Codex Config Viewer
 
-基于 OpenAI Codex 官方 sample config 的可视化配置管理器，支持：
+基于 OpenAI Codex 官方配置文档的可视化配置管理器，支持：
 
 - 双语界面：`zh-CN` / `en`
 - 可视化编辑 Codex 常用配置
@@ -14,7 +14,8 @@
 ## 参考来源
 
 - 官方参考链接：[https://developers.openai.com/codex/config-sample/](https://developers.openai.com/codex/config-sample/)
-- 当前项目声明基于该 sample 的审核时间：`2026-03-19`
+- 官方 Subagents 文档：[https://developers.openai.com/codex/subagents](https://developers.openai.com/codex/subagents)
+- 当前项目声明基于上述官方文档的审核时间：`2026-06-04`
 - Vercel Deploy Button 参考文档：[Working with the Deploy Button](https://vercel.com/docs/deployments/deploy-button)
 
 说明：
@@ -118,9 +119,9 @@ pnpm test
 
 - `Apply recommended preset` / `应用推荐预设`
 
-当前推荐预设是本项目维护的非官方起步配置，基于 `2026-03-19` 审核的官方 sample 进行收敛，默认会应用这些关键值：
+当前推荐预设是本项目维护的非官方起步配置，基于 `2026-06-04` 审核的官方 sample 进行收敛，默认会应用这些关键值：
 
-- `approval_policy = "on-failure"`
+- `approval_policy = "on-request"`
 - `sandbox_mode = "workspace-write"`
 - `shell_environment_policy.inherit = "core"`
 - `sandbox_workspace_write.network_access = true`
@@ -136,6 +137,7 @@ pnpm test
 - Sandbox
 - Shell Environment
 - Tools
+- Agents
 - Model Providers
 - MCP Servers
 - Profiles
@@ -173,6 +175,8 @@ pnpm test
 - `[feedback]`
 - `[otel]`
 - `[windows]`
+- `[agents.reviewer]`
+- `[[skills.config]]`
 
 ### 5. 预览与导出
 
@@ -200,8 +204,37 @@ pnpm test
 
 ```toml
 # Reference: https://developers.openai.com/codex/config-sample/
-# Declared against official sample on 2026-03-19
+# Reference: https://developers.openai.com/codex/subagents
+# Declared against official docs on 2026-06-04
 ```
+
+## Subagents 示例包
+
+仓库内提供了 3 套可复制的 `.codex` 示例包，覆盖常见工程协作场景：
+
+- Coding 通用协作：[`examples/coding-subagents-pack`](./examples/coding-subagents-pack)
+- Frontend 专项协作：[`examples/frontend-subagents-pack`](./examples/frontend-subagents-pack)
+- Backend 专项协作：[`examples/backend-subagents-pack`](./examples/backend-subagents-pack)
+
+每套包都包含：
+
+- `.codex/config.toml`：全局 `[agents]` 限制配置，以及 `[agents.<name>]` agent registry
+- `.codex/agents/*.toml`：按职责拆分的 custom agent 文件
+- `README.zh-CN.md`：包内快速说明
+
+详细指引：
+
+- [`docs/coding-subagents-guide.zh-CN.md`](./docs/coding-subagents-guide.zh-CN.md)
+- [`docs/frontend-subagents-guide.zh-CN.md`](./docs/frontend-subagents-guide.zh-CN.md)
+- [`docs/backend-subagents-guide.zh-CN.md`](./docs/backend-subagents-guide.zh-CN.md)
+
+如果你希望直接下载压缩包，可以使用：
+
+- [`downloads/coding-subagents-pack.zip`](./downloads/coding-subagents-pack.zip)
+- [`downloads/frontend-subagents-pack.zip`](./downloads/frontend-subagents-pack.zip)
+- [`downloads/backend-subagents-pack.zip`](./downloads/backend-subagents-pack.zip)
+
+这些示例包是项目维护的非官方起步配置。模型名优先参考官方 Subagents 页面示例和当前 Models 页面；如果本地环境不可用，删除对应 agent 文件中的 `model` 字段即可继承父会话模型。
 
 ## API 说明
 
