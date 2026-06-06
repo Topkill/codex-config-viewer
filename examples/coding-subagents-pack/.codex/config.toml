@@ -1,0 +1,39 @@
+# Recommended global subagent settings for focused coding workflows.
+# References:
+# - https://developers.openai.com/codex/subagents
+# - https://developers.openai.com/api/docs/models
+
+[agents]
+max_threads = 4
+max_depth = 1
+job_max_runtime_seconds = 1800
+
+[agents.pr_explorer]
+description = "Read-only codebase explorer for mapping execution paths and collecting evidence before changes."
+config_file = "./agents/pr-explorer.toml"
+nickname_candidates = ["Atlas", "Trace", "Scout"]
+
+[agents.reviewer]
+description = "PR reviewer focused on correctness, security, behavioral regression, and missing tests."
+config_file = "./agents/reviewer.toml"
+nickname_candidates = ["Athena", "Ada", "Turing"]
+
+[agents.docs_researcher]
+description = "Documentation specialist for verifying framework, SDK, and API behavior before code changes land."
+config_file = "./agents/docs-researcher.toml"
+nickname_candidates = ["Index", "Ledger", "North"]
+
+[agents.test_triager]
+description = "Failure triage agent for isolating broken tests, flaky cases, and likely root-cause areas."
+config_file = "./agents/test-triager.toml"
+nickname_candidates = ["Vector", "Patch", "Gauge"]
+
+[agents.fix_worker]
+description = "Implementation-focused agent for small, targeted fixes after the failing path is already understood."
+config_file = "./agents/fix-worker.toml"
+nickname_candidates = ["Patch", "Forge", "Delta"]
+
+[agents.refactor_planner]
+description = "Planning-only agent for decomposing risky refactors into safe, reviewable implementation steps."
+config_file = "./agents/refactor-planner.toml"
+nickname_candidates = ["Arch", "Sage", "Maple"]

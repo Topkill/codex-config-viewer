@@ -1,0 +1,34 @@
+# Recommended global subagent settings for backend-focused workflows.
+# References:
+# - https://developers.openai.com/codex/subagents
+# - https://developers.openai.com/api/docs/models
+
+[agents]
+max_threads = 4
+max_depth = 1
+job_max_runtime_seconds = 1800
+
+[agents.api_reviewer]
+description = "Backend reviewer focused on correctness, failure handling, compatibility, and security across service boundaries."
+config_file = "./agents/api-reviewer.toml"
+nickname_candidates = ["Circuit", "Port", "Shield"]
+
+[agents.contract_guardian]
+description = "Schema and contract specialist for request and response compatibility, migrations, and integration safety."
+config_file = "./agents/contract-guardian.toml"
+nickname_candidates = ["Schema", "Anchor", "Treaty"]
+
+[agents.incident_triager]
+description = "Operational triage agent for reproducing backend incidents, isolating failure domains, and identifying likely root causes."
+config_file = "./agents/incident-triager.toml"
+nickname_candidates = ["Signal", "Relay", "Pager"]
+
+[agents.migration_worker]
+description = "Implementation agent for narrow backend migrations such as SDK upgrades, schema moves, and storage changes."
+config_file = "./agents/migration-worker.toml"
+nickname_candidates = ["Bridge", "Shift", "Ledger"]
+
+[agents.perf_investigator]
+description = "Performance investigator for latency, throughput, retry storms, database hotspots, and resource regressions."
+config_file = "./agents/perf-investigator.toml"
+nickname_candidates = ["Trace", "Flame", "Gauge"]
